@@ -1,0 +1,133 @@
+<?php require_once('../../Connections/nurseConnect.php'); ?>
+<?php
+if (!isset($_SESSION)) {
+  session_start();
+}
+$MM_authorizedUsers = "dnpAccApp";
+$MM_donotCheckaccess = "false";
+
+// *** Restrict Access To Page: Grant or deny access to this page
+function isAuthorized($strUsers, $strGroups, $UserName, $UserGroup) { 
+  // For security, start by assuming the visitor is NOT authorized. 
+  $isValid = False; 
+
+  // When a visitor has logged into this site, the Session variable MM_Username set equal to their username. 
+  // Therefore, we know that a user is NOT logged in if that Session variable is blank. 
+  if (!empty($UserName)) { 
+    // Besides being logged in, you may restrict access to only certain users based on an ID established when they login. 
+    // Parse the strings into arrays. 
+    $arrUsers = Explode(",", $strUsers); 
+    $arrGroups = Explode(",", $strGroups); 
+    if (in_array($UserName, $arrUsers)) { 
+      $isValid = true; 
+    } 
+    // Or, you may restrict access to only certain users based on their username. 
+    if (in_array($UserGroup, $arrGroups)) { 
+      $isValid = true; 
+    } 
+    if (($strUsers == "") && false) { 
+      $isValid = true; 
+    } 
+  } 
+  return $isValid; 
+}
+
+$MM_restrictGoTo = "tryAgain.php";
+if (!((isset($_SESSION['MM_Username'])) && (isAuthorized("",$MM_authorizedUsers, $_SESSION['MM_Username'], $_SESSION['MM_UserGroup'])))) {   
+  $MM_qsChar = "?";
+  $MM_referrer = $_SERVER['PHP_SELF'];
+  if (strpos($MM_restrictGoTo, "?")) $MM_qsChar = "&";
+  if (isset($QUERY_STRING) && strlen($QUERY_STRING) > 0) 
+  $MM_referrer .= "?" . $QUERY_STRING;
+  $MM_restrictGoTo = $MM_restrictGoTo. $MM_qsChar . "accesscheck=" . urlencode($MM_referrer);
+  header("Location: ". $MM_restrictGoTo); 
+  exit;
+}
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_nurse, $nurseConnect);
+$query_rstRestrAccess = "SELECT * FROM oss_login";
+$rstRestrAccess = mysql_query($query_rstRestrAccess, $nurseConnect) or die(mysql_error());
+$row_rstRestrAccess = mysql_fetch_assoc($rstRestrAccess);
+$totalRows_rstRestrAccess = mysql_num_rows($rstRestrAccess);
+?>
+<!DOCTYPE htm PUBLIC "-//W3C//DTD htm 4.01 Transitional//EN"
+"http://www.w3.org/TR/htm4/loose.dtd">
+<htm>
+<head>
+<title>Columbia University School of Nursing - DNP Accepted Applicants</title>
+<meta http-equiv="Content-Type" content="text/htm; charset=iso-8859-1">
+<link href="dnpAccAppStyles.css" rel="stylesheet" type="text/css">
+<script src="../SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+<div id="wrapper">
+<div id="header"></div>
+<div id="nav">
+
+</div>
+<div id="content">
+<h1>Congratulations and Welcome to the Doctor of Nursing Practice Program at
+  Columbia University School of Nursing </h1>
+<p align="left">Dear DNP Student, </p>
+<p align="left">We would like to welcome you to Columbia University School of
+  Nursing. You have been selected from a highly competitive pool of applicants
+  to be a student in the Doctor of Nursing Practice (DNP) class in a
+  premier graduate school with celebrated faculty. Our faculty represent the
+  finest constellation of practice, research and policy makers in the discipline. </p>
+<p align="left">As you continue your journey into doctoral level advanced practice,
+  you will have the privilege of becoming part of the first-ever doctoral program
+  for advanced clinicians in the country. You will study with faculty who are
+  doctorally prepared clinical experts who maintain active and relevant faculty/practices
+  in their specialty. Your professors and instructors live in both worlds of
+  clinical practice and academic instruction, and therefore impart pertinent,
+  timely and applicable knowledge and skills. </p>
+<p align="left">We are pleased that you will be joining our family of clinical
+  scholars, health policy analysts, nurse researchers, and accomplished and exceptional
+  students at Columbia University School of Nursing. We look forward to seeing
+  you this fall! </p>
+<p align="left">Best Regards, </p>
+<p><strong>Mary O'Neil Mundinger, DrPH, RN<br>
+Dean, School of Nursing <br>
+Centennial Professor of Health Policy </strong>
+<p>&nbsp;</p>
+</div></div>
+</body>
+<?php
+mysql_free_result($rstRestrAccess);
+?>
+</htm>
