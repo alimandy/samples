@@ -1,0 +1,268 @@
+<?php require_once('../Connections/nurseConnect.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "")
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_nurseConnect, $nurseConnect);
+$query_rstSummer1 = "SELECT cl_courses.courseName, cl_courses.credits, cl_courses.course_no, tblSpecialtiesCourses.specialty, tblSpecialtiesCourses.courseNo, tblSpecialtiesCourses.term, tblSpecialtiesCourses.type FROM cl_courses, tblSpecialtiesCourses WHERE tblSpecialtiesCourses.courseNo = cl_courses.course_no AND tblSpecialtiesCourses.specialty = 'Combined BS/MS (ETP)' AND tblSpecialtiesCourses.term = 'Summer I' ORDER BY tblSpecialtiesCourses.courseNo";
+$rstSummer1 = mysql_query($query_rstSummer1, $nurseConnect) or die(mysql_error());
+$row_rstSummer1 = mysql_fetch_assoc($rstSummer1);
+$totalRows_rstSummer1 = mysql_num_rows($rstSummer1);
+
+mysql_select_db($database_nurseConnect, $nurseConnect);
+$query_rstCountSummer1 = "SELECT SUM(cl_courses.credits) AS SUM_credits,  	tblSpecialtiesCourses.specialty,  	tblSpecialtiesCourses.term FROM cl_courses, tblSpecialtiesCourses WHERE tblSpecialtiesCourses.specialty = 'Combined BS/MS (ETP)' AND tblSpecialtiesCourses.term = 'Summer I' AND cl_courses.course_no = tblSpecialtiesCourses.courseNo GROUP BY tblSpecialtiesCourses.specialty, tblSpecialtiesCourses.term HAVING tblSpecialtiesCourses.term = 'Summer I'";
+$rstCountSummer1 = mysql_query($query_rstCountSummer1, $nurseConnect) or die(mysql_error());
+$row_rstCountSummer1 = mysql_fetch_assoc($rstCountSummer1);
+$totalRows_rstCountSummer1 = mysql_num_rows($rstCountSummer1);
+
+mysql_select_db($database_nurseConnect, $nurseConnect);
+$query_rstFall1 = "SELECT cl_courses.courseName, cl_courses.credits, cl_courses.course_no, tblSpecialtiesCourses.specialty, tblSpecialtiesCourses.courseNo, tblSpecialtiesCourses.term, tblSpecialtiesCourses.type FROM cl_courses, tblSpecialtiesCourses WHERE tblSpecialtiesCourses.courseNo = cl_courses.course_no AND tblSpecialtiesCourses.specialty = 'Combined BS/MS (ETP)' AND tblSpecialtiesCourses.term = 'Fall I' ORDER BY tblSpecialtiesCourses.courseNo";
+$rstFall1 = mysql_query($query_rstFall1, $nurseConnect) or die(mysql_error());
+$row_rstFall1 = mysql_fetch_assoc($rstFall1);
+$totalRows_rstFall1 = mysql_num_rows($rstFall1);
+
+mysql_select_db($database_nurseConnect, $nurseConnect);
+$query_rstCountFall1 = "SELECT SUM(cl_courses.credits) AS SUM_credits,  	tblSpecialtiesCourses.specialty,  	tblSpecialtiesCourses.term FROM cl_courses, tblSpecialtiesCourses WHERE tblSpecialtiesCourses.specialty = 'Combined BS/MS (ETP)' AND tblSpecialtiesCourses.term = 'Fall I' AND cl_courses.course_no = tblSpecialtiesCourses.courseNo GROUP BY tblSpecialtiesCourses.specialty, tblSpecialtiesCourses.term HAVING tblSpecialtiesCourses.term = 'Fall I'";
+$rstCountFall1 = mysql_query($query_rstCountFall1, $nurseConnect) or die(mysql_error());
+$row_rstCountFall1 = mysql_fetch_assoc($rstCountFall1);
+$totalRows_rstCountFall1 = mysql_num_rows($rstCountFall1);
+
+mysql_select_db($database_nurseConnect, $nurseConnect);
+$query_rstSpring1 = "SELECT cl_courses.courseName, cl_courses.credits, cl_courses.course_no, tblSpecialtiesCourses.specialty, tblSpecialtiesCourses.courseNo, tblSpecialtiesCourses.term, tblSpecialtiesCourses.type FROM cl_courses, tblSpecialtiesCourses WHERE tblSpecialtiesCourses.courseNo = cl_courses.course_no AND tblSpecialtiesCourses.specialty = 'Combined BS/MS (ETP)' AND tblSpecialtiesCourses.term = 'Spring I' ORDER BY tblSpecialtiesCourses.courseNo";
+$rstSpring1 = mysql_query($query_rstSpring1, $nurseConnect) or die(mysql_error());
+$row_rstSpring1 = mysql_fetch_assoc($rstSpring1);
+$totalRows_rstSpring1 = mysql_num_rows($rstSpring1);
+
+
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<script language="JavaScript" type="text/JavaScript">
+<!--
+function MM_callJS(jsStr) { //v2.0
+  return eval(jsStr)
+}
+
+function MM_popupMsg(msg) { //v1.0
+  alert(msg);
+}
+//-->
+</script>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+
+<meta name="description" content="Combined BS/MS at the Columbia University School of Nursing">
+<!-- accelerated, graduate programs, direct entry nursing, columbia college, nursing, drnp, doctor of nursing practice, "doctor of nursing practice", advanced practice nursing, advanced nurse practitioner, columbia university, new york, new york city, advanced nurse practitioner, master's degree, msn, mary mundinger, bobbie berkowitz, entry to practice, "entry to practice", entry-to-practice -->
+<meta name="keywords" content="accelerated, accelerated bsn program, combined BS/MS, master's program, direct entry nursing, direct entry, nursing master's program, advanced practice nursing, advanced nurse practitioner, columbia university school of nursing, bobbie berkowitz, dean berkowitz, nursing school, nursing schools, drnp, graduate programs in nursing, nursing graduate programs, msn, new york, new york nursing schools">
+<!-- Piwik -->
+<script type="text/javascript">
+var pkBaseURL = (("https:" == document.location.protocol) ? "https://www.cumc.columbia.edu/piwik/" : "http://rblweb2.cumc.columbia.edu/piwik/");
+document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script type="text/javascript">
+try {
+var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 24);
+piwikTracker.trackPageView();
+piwikTracker.enableLinkTracking();
+} catch( err ) {}
+</script><noscript><p><img src="http://rblweb2.cumc.columbia.edu/piwik/piwik.php?idsite=24" style="border:0" alt="" /></p></noscript>
+<!-- End Piwik Tag -->
+<title>Columbia University School of Nursing</title>
+<link href="../newHomePage.css" rel="stylesheet" media="screen" type="text/css" />
+<script src="../SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript">
+<!--
+function MM_openBrWindow(theURL,winName,features) { //v2.0
+  window.open(theURL,winName,features);
+}
+//-->
+</script>
+<!-- Google Analytics start -->
+<script type="text/javascript">
+ var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-35059758-1']);
+  _gaq.push(['_setDomainName', 'cumc.columbia.edu']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+<!-- Google Analytics end -->
+</head>
+<body>
+<a name="top"></a>
+<div id="wrapper">
+<?php require_once('../includesPHP/ssiTop.html'); ?>
+  <?php require_once('../includesPHP/ssi_topNav.html'); ?>
+</div>
+ <?php require_once('ssi_leftMenu_acadETP.html'); ?>
+<div id="insideContent">
+ <h1 class="L1Header">Combined BS/MS (ETP) Program for Non-Nursing College Graduates</h1>
+ <table width="650" border="0" cellpadding="0">
+   <tr>
+     <td width="148" height="214" rowspan="2" bgcolor="#194579"><img src="images/etpL2Stinson.jpg" alt="" width="148" /></td>
+     <td height="45" valign="middle" bgcolor="#194579" class="whiteText"><h4>Allison Stinson</h4></td>
+   </tr>
+   <tr>
+     <td valign="middle" bgcolor="#FFC575"><p>
+       &quot;I&rsquo;m currently in the second phase of the Combined BS/MS Program, studying to become a nurse midwife. My dream is to work for Doctors Without Borders and eventually obtain a master&rsquo;s degree in public health. &ldquo;I earned my bachelor&rsquo;s degree in international development from the University of California, Berkeley, and moved to Jakarta shortly after graduation to volunteer at a public health clinic for women and children. I received scholarship support through gifts from the CUSON Annual Fund that allow me to focus on my schoolwork and volunteer with CoSMO, Columbia&rsquo;s free student-run primary care clinic, as well as serve as a doula at Bellevue Hospital. &ldquo;</p></td>
+   </tr>
+ </table>
+ <hr>
+<!-- <strong>Please note that we will not offer the Neonatal Nurse Practitioner option for the summer 2012 ETP class, as we will not offer an NNP option for summer 2013 entry.</strong></p> -->
+
+
+   <h2>Program Description</h2>
+ <p>   The Combined BS/MS Entry to Practice (ETP) Program is an accelerated nursing program for non-nurse college graduates designed to prepare students for a career as a professional advanced practice nurse. Academic studies are closely integrated with clinical experience. Pre-licensure study prepares the student for nursing practice followed by specialty study as an advanced practice nurse or doctoral study as researchers or advanced clinicians in clinical care or health policy.</p>
+    <p>The pre-licensure curriculum allows students to develop basic competence in professional nursing upon which to build advanced knowledge and skill in a chosen specialty during the post-licensure segment of the program.&nbsp; Clinical education receives major emphasis, with patient experiences beginning in the first term. Theory and precepted clinical practice are related to the promotion of health and prevention of illness, as well as to the care of the ill and their restoration to optimal wellness. Students work with patients in a variety of settings, such as clinics, hospitals, community centers, and homes.</p>
+    <p>The post-licensure specialty curricula prepare students for their chosen role in advanced practice nursing.&nbsp; Specialty study follows the curriculum for a specific clinical major. Students may select one of the following specialty majors for study: Acute Care, Anesthesia, Midwifery, Women&rsquo;s Health, Psychiatric Mental Health, and Adult-Gerontology, Family, or Pediatric Primary Care. The PhD program prepares nurse scholars to examine, shape, and direct the practice of nursing and the evolving system of health care.&nbsp; The DNP program prepares nurse clinicians with the knowledge, skills and attributes necessary for fully accountable practice with patients across sites and over time.</p>
+    <p>Students begin the program in late May/early June (summer semester). The course sequencing has been designed to allow for a seamless progression through pre-licensure and specialty studies and post licensure studies.</p>
+    <p>Program Director for the Combined Entry to Practice program is <a href="../faculty/profile2.php?uni=ksd7">Karen Desjardins, MS, MPH, DNP</a>.</p>
+    <p><strong><a href="etpAppProcess.php">Application Process </a><br>
+   <a href="etpfaq.php"> ETP Frequently Asked Questions</a></strong></p>
+    <h2>Clinical Sites</h2>
+   <p>   Clinical sites are available New York City and beyond. Clinical sites vary in setting and you can be assigned location at hospitals, out-patient clinics, home care, or schools to name a few.</p>
+    <h2>Admission</h2>
+    <p>Please contact the Office of Admissions for details regarding admission and financial aid packages. </p>
+    <p><em>Admission criteria include:</em></p>
+    <ul>
+      <li>Bachelor&rsquo;s degree from an accredited college or university</li>
+      <li>The following undergraduate courses:
+      <ul>
+      <li><strong>English Composition</strong>, 1 course </li>
+      <li>Life Sciences, 3-4 courses
+        <br>
+        **<strong>Required: human anatomy, human physiology, and microbiology</strong>; <br>
+    ***Applicants applying for the Nurse Anesthesia specialty:&nbsp; two semesters of chemistry (at least one organic course)<br>
+    <br>
+    </li>
+      <li><strong>Psychology</strong>, 1-2 courses&nbsp; (Must be Intro, Life Span or Developmental Psychology)</li>
+      <li><strong>Humanities</strong>, 2-3 courses</li>
+      <li><strong>Statistics</strong>, 1 course</li>
+      <li><strong>Nutrition</strong>, 1 course</li>
+      <li><strong>Social/Behavioral Sciences</strong>, 1-2 courses</li>
+       </ul></li>
+      <li>Satisfactory score on the Graduate Record Examination (GRE)</li>
+
+
+
+    <li>Three references attesting to applicant&rsquo;s academic ability and potential</li>
+    <li>Personal goal statement that is congruent with program goals (two pages, double-spaced, 12 pt. font)</li>
+    <li>Resume or Curriculum Vitae</li>
+  </ul>
+  <h2>Curriculum </h2>
+  <p>  <strong><em>For Applicants Who Hold an Undergraduate Non-Nursing Degree</em></strong><br>
+    A sample program plan is provided below to make you aware of the academic requirements of the program. Please be advised that this program plan is a sample, and individual plans of study are reviewed and approved upon acceptance to the program. Progression in the program is contingent upon meeting academic policies.&nbsp;The School of Nursing reserves the right to change the course offering schedule as stated in the student bulletin. </p>
+   <h2 class="center">Sample Program Plan</h2>
+    <table width="100%" border="1" cellspacing="0" cellpadding="4">
+      <tr bgcolor="#99FFFF">
+        <td align="center" bgcolor="#003366"><strong class="whtText">Course Number</strong></td>
+        <td align="center" bgcolor="#003366"><strong class="whtText">Course Name</strong></td>
+        <td align="center" bgcolor="#003366"><strong class="whtText">Credits</strong></td>
+        <td align="center" bgcolor="#003366"><strong class="whtText">Type</strong></td>
+      </tr>
+      <tr>
+        <td colspan="4" align="center"><strong>Summer I: <?php echo $row_rstCountSummer1['SUM_credits']; ?> Credits</strong></td>
+      </tr>
+      <?php do { ?>
+        <tr>
+          <td align="center" class="pseudoLink" onClick="MM_openBrWindow('crs_descr.php?course_no=<?php echo $row_rstSummer1['course_no']; ?>','summer1','scrollbars=yes,width=475,height=350')"><a href="#"><?php echo $row_rstSummer1['course_no']; ?></a></td>
+          <td><?php echo $row_rstSummer1['courseName']; ?></td>
+          <td align="center"><?php echo $row_rstSummer1['credits']; ?></td>
+          <td align="center"><?php echo $row_rstSummer1['type']; ?></td>
+        </tr>
+<?php } while ($row_rstSummer1 = mysql_fetch_assoc($rstSummer1)); ?>
+        <tr>
+          <td colspan="4" align="center"><strong>Fall: <?php echo $row_rstCountFall1['SUM_credits']; ?> Credits</strong></td>
+      </tr>
+        <?php do { ?>
+          <tr>
+            <td align="center" class="pseudoLink" onClick="MM_openBrWindow('crs_descr.php?course_no=<?php echo $row_rstFall1['course_no']; ?>','fall1','scrollbars=yes,width=475,height=350')"><a href="#"><?php echo $row_rstFall1['course_no']; ?></a></td>
+            <td><?php echo $row_rstFall1['courseName']; ?></td>
+            <td align="center"><?php echo $row_rstFall1['credits']; ?></td>
+            <td align="center"><?php echo $row_rstFall1['type']; ?></td>
+          </tr>
+          <?php } while ($row_rstFall1 = mysql_fetch_assoc($rstFall1)); ?>
+<tr>
+          <td colspan="4" align="center"><strong>Winter/Spring I: <?php echo $row_rstCountSpring1['SUM_credits']; ?> Credits</strong></td>
+      </tr>
+        <?php do { ?>
+          <tr>
+            <td align="center" class="pseudoLink" onClick="MM_openBrWindow('crs_descr.php?course_no=<?php echo $row_rstSpring1['course_no']; ?>','spring1','scrollbars=yes,width=475,height=350')"><a href="#"><?php echo $row_rstSpring1['course_no']; ?></a></td>
+            <td><?php echo $row_rstSpring1['courseName']; ?></td>
+            <td align="center"><?php echo $row_rstSpring1['credits']; ?></td>
+            <td align="center"><?php echo $row_rstSpring1['type']; ?></td>
+          </tr>
+          <?php } while ($row_rstSpring1 = mysql_fetch_assoc($rstSpring1)); ?>
+
+ <tr>
+
+            <td colspan="2" align="right"><strong>Total Credits</strong></td>
+        <td align="center"><strong><?php echo $row_rstTotalCredits['SUM_credits']; ?></strong></td>
+      <td align="center">&nbsp;</td>
+          </tr>
+    </table>
+
+   <p><i>The above information is current as of <?php echo $row_rstUpdateAdm['dateUpdated']; ?> and is subject to change
+      at any time. </i></p>
+        <p><a href="#top"><img src="../images/upSmall.gif" width="15" height="13" border="0"></a></p>
+
+</div>
+<div id="topFooter">
+</div></div>
+<?php require_once('../includesPHP/ssi_midBoxFooterNav.html'); ?>
+</body>
+</html>
+<?php
+mysql_free_result($rstSummer1);
+
+mysql_free_result($rstCountSummer1);
+
+mysql_free_result($rstFall1);
+
+mysql_free_result($rstCountFall1);
+
+mysql_free_result($rstSpring1);
+
+mysql_free_result($rstCountSpring1);
+
+mysql_free_result($rstTotalCredits);
+
+mysql_free_result($rstUpdated);
+
+mysql_free_result($rstUpdateAdm);
+?>
