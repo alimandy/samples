@@ -1,0 +1,261 @@
+/*
+ * Superscrollorama Helper Plugin 
+ * Author: Ali Faqih
+ * 
+ * Add animations to the animations method. 
+ * All other functionality is built. Including adding the bounce to the scroll down indicator and resizing events.
+ * 
+ */
+
+;(function ( window, document, $, undefined ) {
+	'use strict';
+
+	var Scrollorama,
+
+	app = {
+
+		init: function() {
+
+			//local var
+			var that = this,
+				resizeOnce;
+
+			//object variables
+			this.windowHeight = window.innerHeight;
+			this.windowWidth = window.innerWidth;
+			this.resizeDiv = document.getElementById("resizingContent");
+			this.topVideo = document.getElementById("topVideo");
+			this.bottomVid = document.getElementById("bottomVideo");
+    
+			//start the magic
+			this.load();
+			this.checkDate();
+    
+			//bounce the scroll down indicator
+			this.doBounce('#cursor', 10, 800, 'bottom');
+    
+			//track initial page view
+			this.trackView("Scene 1 - Cover Video");
+
+			$( window ).resize(function () {
+
+				//reasign height and width
+				that.windowWidth = window.innerWidth;
+				that.windowHeight = window.innerHeight;
+        
+				//display resize div
+				that.resizeDiv.style.display = "block";
+        
+				//clear timeout on resizing function
+				clearTimeout( resizeOnce );
+        
+				//set another timeout 500ms till resizing 
+				resizeOnce = setTimeout(function(){
+					that.refresh();
+				}, 500);
+
+			});
+        
+			return this;
+        
+		},
+    
+		// Load scrollorama and resize
+		load: function () {
+
+			this.resizeAndReposition();
+			this.create();
+    
+			return this;
+		
+		},
+    
+		// Create the scrollorama object and load animations
+		create: function () {
+    
+		    Scrollorama = new $.superscrollorama({
+		      triggerAtCenter: true
+		    });
+		    this.animations();
+
+		},
+	 
+		// Re-initialize scrollorama; destroys then reloads
+		refresh: function () {
+
+			window.scrollTo(0, 0);
+			Scrollorama.destroy();
+			this.topVideo.play();
+			this.load();
+
+			return this;
+		
+		},
+
+		//animations
+		animations: function () {
+		
+			//hide resize div if showing
+			this.resizeDiv.style.display = "none";
+
+			//local var
+			var that = this;
+		    
+		    /*
+		     * EXAMPLE
+		     * Also, you can go here http://johnpolacek.github.io/superscrollorama/
+		     * Animations are done with the greensock Tweening libary: http://www.greensock.com/get-started-js/#basics
+		     * 
+		    
+		    //Pinned animations
+		    
+		    Scrollorama.pin( $('#example'), 1000, {
+		      anim: (new TimelineLite())
+		        .append (
+		          TweenMax.to($('#example video'), .1, {css:{display:'block'}})
+		        )
+		        .append (
+		          TweenMax.to($('#example .child'), .1, {css: {top: 100+'px'}} )
+		        ),
+		      onPin: function(){
+		        //something on pin
+		      },
+		      onUnpin: function(){
+		        // something off pin
+		        //that.trackView( "scene to track" );
+		      }
+		    });
+		    
+		    //Scrolled animations
+		    
+		    Scrollorama.addTween($('#example2'),
+		              (new TimelineLite())
+		                .append(
+		                  TweenMax.to($('#example .child'), .1, {css: {top: 100+'px'}} )
+		                ),
+		                .append([
+		                  TweenMax.fromTo($('#scene_example'), 1, { css: { top: -550 }, immediateRender: true }, { css: { top: 3000 } }),
+		                  TweenMax.to($('#example .child'), .1, {css: {top: 100+'px'}} )
+		                ]),
+		              4000
+		          );
+		    
+		    *
+		    * 
+		    */
+	 
+		},
+
+		resizeAndReposition: function() {
+
+			//local var
+			var that = this,
+				datacenter = function() {
+					$( "[data-center]" ).each(function() {
+						$( this ).css({
+							left: ((that.windowWidth / 2) - ($( this ).width() / 2))
+						});
+					});
+				};
+
+	        //Resize
+	        $( "[data-fill]" ).each(function() {
+	            $( this ).css({
+	                width: '100%',
+	                height: 'auto'
+	            });
+	            if ($( this ).height() < that.windowHeight) {
+	                $( this ).css({
+	                    width: 'auto',
+	                    height: '100%'
+	                });
+	            }
+	        });
+	        $( "[data-screen]" ).each(function() {
+	            $( this ).css({
+	                height: that.windowHeight
+	            });
+	        });
+
+			//center data-center elements after 150ms
+			setTimeout(datacenter, 150);
+
+		},
+    
+		doBounce: function( element, distance, speed, type ) {
+
+			element = $( element );
+
+			//type is for elements positioned using bottom rather than top
+			if ( !type ) {
+				window.setInterval(function () {
+					element.animate({top: '+='+distance}, speed)
+						.animate({top: '-='+distance}, speed);
+				}, 0);
+			} else {
+				window.setInterval(function () {
+					element.animate({bottom: '+='+distance}, speed)
+						.animate({bottom: '-='+distance}, speed);
+				}, 0);
+			}
+
+		},
+    
+		trackView: function( scene ) {
+    
+		    var location = window.location;
+		    //only if it has comlex and doesn't have beta in the hostname push events
+		    if ( location.hostname.indexOf('complex.com') !== -1 && location.hostname.indexOf('beta') === -1 ) { 
+		      _gaq.push(['_trackPageview']);      
+		      _gaq.push(['_trackEvent', 'Digital Cover', $( "title" ).text(), scene ]);			
+		        //refresh Quantcast
+		      try {
+		        _qevents.push({qacct:"p-a0gOdUACucKCE", event:"refresh" });
+		      } catch (e) {
+		        console.log("TRACKING ERROR"+e);
+		      }
+		    }
+    
+		},
+	
+		//show/hides week of content links based on date
+		checkDate: function() {
+		
+			//local var
+			var current = new Date(),
+				expiration = [];
+  
+			//change these to be the date to show link and amount of 'week of content' links
+			expiration[0]  = new Date("December 2, 2013 11:00:00");
+		    expiration[1]  = new Date("December 3, 2013 11:00:00");
+		    expiration[2]  = new Date("December 4, 2013 11:00:00");
+		    expiration[3]  = new Date("December 5, 2013 11:00:00");
+		    expiration[4]  = new Date("December 6, 2013 11:00:00");
+    
+		    //remove inactive class when date has passed
+		    for ( var i=0, y=expiration.length; i<y; ++i ) {
+		      if ( current.getTime() > expiration[i].getTime() ) { 
+		        $( "#contentDay"+i ).find("a.inactive").removeClass("inactive");
+		      }
+		    }
+		}
+	
+	};
+
+
+	$(function() {
+
+		//start your engines
+		app.init();
+	
+		//assign globally for testing
+		window.App = app;
+    
+		//make inactive 'week of content' links unclickable
+		$( "#week-of-content a.inactive" ).click(function( e ){
+			e.preventDefault();
+		});
+    
+	});
+
+})(window, document, jQuery);
