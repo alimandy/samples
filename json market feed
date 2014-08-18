@@ -1,0 +1,1132 @@
+(function($){
+  
+	var MARKETJSON = "/market-feed";
+	var PRODUCTJSON = "/product-configurator-feed";
+	
+	var isCommercial = true;
+	
+	var PERCENTDISCOUNT = 0.9;
+	var PERCENTDISCOUNTED = 0.1;
+	
+	var PROPANEL = "Pro Trainer"; // changed from Pro Panel
+	var PROSPORTSPANEL = "Pro Sports Panel";
+	var BROADCASTVISION = "Broadcast Vision Power Jack";
+	var ACCUTRACKCONTACT = "Accutrack Contact Heart-Rate Monitoring";
+        var CARDIOTHEATER_BROADCASTVISION = "Cardio Theater/Broadcast Vision Power Jack";
+
+	var slideAnimating = false;
+	//var currentStep = 0;
+	var SLIDESPEED = 300;
+	
+	/* 	Caching DOM Elements for later use, improves performance. 
+		http://dumitruglavan.com/jquery-performance-tips-cheat-sheet/
+	*/
+	var $runningTotal = $("#msrp-running-total");
+	var $runningTotalVal = $("#runningTotalVal");
+	var $runningSubtotalTotalVal = $("#runningSubtotalTotalVal");
+	var $runningSubtotalDiscountVal = $("#runningSubtotalDiscountVal");
+	var $configuratorForm = $("#configurator-form");
+	var $selectIndustryControl = $("#selectIndustryControl");
+	var $selectIndustryEl = $("#selectIndustry");
+	
+	var $configuratorMarkers = $("#configurator-marker-container li");
+
+	var $configuratorResultsContainer = $("#configurator-results-container");
+	var $configuratorStepsWindow = $("#configurator-steps-window");
+	var $configuratorStepsPanel = $("#configurator-steps-panel");
+	var $configuratorSteps = $(".configurator-step");
+	var stepCount = $configuratorSteps.length;
+	var stepWidths = $configuratorStepsPanel.width();
+	var firstStepHeight = $configuratorSteps.eq(0).height();
+
+	var $prevButton = $("#configurator-controller-area .prevbutton");
+	var $nextButton = $("#configurator-controller-area .nextbutton");
+	var $submitRequest = $("#configurator-controller-area .submitrequest");
+        var $submitOrder = $(".submitOrder");
+        var $resultsHeader = $("#configurator-results-container-inner .configurator-results-header");
+        var $sharePrint = $("#configurator-results-container-inner .configurator-shareprint");
+        
+	var $configuratorWrapper = $("#configurator-wrapper");
+	var $configuratorWrapperPane = $("#configurator-wrapper-pane");
+	var $configuratorContainer = $(".configurator-container");
+	var configuratorContainerHeight = $(".configurator-container").height();
+	var $configuratorResultsContainer = $("#configurator-results-container");
+	
+	var configuratorWrapperWindowWidth = $configuratorWrapper.width();
+
+	var $modelControlGroup = $("#model-control-group");
+	var $controlPanelControlGroup = $("#control-panel-control-group");
+	var $suspensionControlGroup = $("#suspension-control-group");
+	var $entertainmentControlGroup = $("#entertainment-control-group");
+	var $entertainmentextraControlGroup = $("#entertainmentextra-control-group");
+	var $additionalControlGroup = $("#additional-control-group");
+	
+	var $configuratoResultsSection = $('.configurator-results-section');
+	var $configuratorHelp = $('.configurator-dealerhelp');	
+	
+	var productObjArray = [];
+	var marketOptionList = [];
+	
+	initialLoad();
+	attachFormHandler();
+	
+	var AJAXDONE = false;
+	
+	/* Generate Market List off of JSON */
+	$.getJSON(MARKETJSON, function(data) {
+		var optionItems = [];
+		$.each(data.markets, function(key, val) {
+			$selectIndustryEl.append("<option>" + val.title + "</option>");
+			marketOptionList.push(val.title);
+		});
+	});
+	
+
+		
+	/* 	Process Product List off of JSON, restructure into new object array 'productObjArray'
+		Some parts of the JSON needed to be parsed out by '|' and '||' delimeters, as the Drupal webservice
+		wasn't granular enough to separate every single field into a JSON object
+		
+		Each configurator is parsed and processed into an object array suitable for further JS programming
+	*/
+	$.getJSON(PRODUCTJSON, function(data) {
+		restructureJSON(data)
+		attachFormHandler();
+		document.body.style.cursor = 'wait';
+		enableForm();
+		document.body.style.cursor = 'default';
+		AJAXDONE = true;
+		defaultMarketSelected();
+	});
+	
+	/* 	Build an array of models based on chosen the market and industry type 
+		It runs through the 'productObjArray' (built from the JSON) and picks up matching products
+		based on the conditionals below
+		
+		Returns an array of chosen models
+	*/
+	function getModels(marketType,industryType){
+		var modelsArr = [];
+		$.each(productObjArray, function(key,val){
+			if(marketType == "Home Fitness"){
+				if(this.field_market_type_new == marketType){
+					modelsArr.push(this);
+				}
+			}
+			
+			else if (marketType == "Commercial Fitness"){
+				if($.inArray(industryType,this.field_industry_new) > -1){
+					modelsArr.push(this);
+				}
+			}
+		});
+		
+		return modelsArr;
+	}	
+
+	/* 	Get a model by model id 
+		Model id is data attached to the HTML radio button when it is generated
+		Inspect the DOM, look for "data-modelid"
+		
+		Returns a single configurator model
+	*/
+	
+	function getModel(modelID){
+		var singleModel = '';
+		$.each(productObjArray, function(key,val){
+			if(this.id == modelID){
+				singleModel = this;
+			}
+		});
+		
+		return singleModel;
+	}
+	
+	function getControlPanels(modelID){
+	
+		return model.field_control_panel_new;
+	}
+	
+	/* 	Process Product List off of JSON, restructure into new object array 'productObjArray'
+		Some parts of the JSON needed to be parsed out by '|' and '||' delimeters, as the Drupal webservice
+		wasn't granular enough to separate every single field into a JSON object
+		
+		Each configurator is parsed and processed into an object array suitable for further JS programming
+	*/
+	
+	function restructureJSON(data){
+		$.each(data.nodes, function(index, val) {
+			var productObj = {};
+			var productNode = val.node;
+			
+			
+			productObj.title = $.trim(productNode.title);
+			productObj.name =  $.trim(productNode.field_product_node_reference);
+			productObj.id = index;
+			productObj.field_market_type_new = $.trim(productNode.field_market_type_new);
+			productObj.field_product_node_reference = $.trim(productNode.field_product_node_reference);
+			productObj.field_industry_new = productNode.field_industry_new.split("|");
+
+			/*Control Panel data */
+			/* Run through each control panel that is delimited by '||' */
+			productObj.field_control_panel_new = [];
+			$.each(productNode.field_control_panel_new.split("||"), function(index, val) {
+			
+				var isDefaultFlag = false;
+				
+				/* Set option as default if 'default string exists */
+				if(val.indexOf('(**Default)') > -1){
+					val = val.replace('(**Default)','');
+					isDefaultFlag = true;
+				}
+
+				/* 	Save sub-fields of control panel (price, name)
+					If none exists, skip
+				*/
+				var consoleProp = val.split("|");
+				if(!isBlank(consoleProp)){
+					productObj.field_control_panel_new.push({
+						id: index,
+						name: $.trim(consoleProp[0]),
+						price: $.trim(consoleProp[1].replace(/,/g,"")),
+						isDefault: isDefaultFlag
+					});
+				}
+				
+			});
+
+			/*Suspenstion options data */
+
+			productObj.field_suspension_options_new = [];
+			$.each(productNode.field_suspension_options_new.split("||"), function(index, val) {
+				var consoleProp = val.split("|");
+				if(!isBlank(consoleProp)){
+					/* 	Save sub-fields within control panel (price, name, hoverinfo)
+						If none exists, skip */
+						
+						var isDefaultFlag = false;
+						
+						/* Set option as default if 'default string exists */
+						
+						/*if(val.indexOf('(Default)') > -1){
+							val = val.replace('(Default)','');
+							isDefaultFlag = true;
+						}*/
+						
+				
+					productObj.field_suspension_options_new.push({
+						id: index,
+						name: $.trim(consoleProp[0]),
+						price: $.trim(consoleProp[1].replace(/,/g,"")),
+						info: $.trim(consoleProp[2]),
+						//isDefault: isDefaultFlag
+					});
+				}
+			});
+
+			/*Entertainment options data */
+			productObj.field_entertainment_options_new = [];
+			$.each(productNode.field_entertainment_options_new.split("||"), function(index, val) {
+				/* First remove any extraneous text */
+				val = val.replace('EditDeleteManage display','');
+				val = val.replace('(**Except when Pro Control Panel - should not display if Pro panel selected**)','');
+				
+				/*Split subfields separate by '|'*/
+				var consoleProp = val.split("|");
+				
+				if(!isBlank(consoleProp)){
+					productObj.field_entertainment_options_new.push({
+						id: index,
+						name: $.trim(consoleProp[0]),
+						option_type: $.trim(consoleProp[1]),
+						info: $.trim(consoleProp[2]),
+						price: $.trim(consoleProp[3].replace(/,/g,""))
+					});
+				}
+			});
+  
+			/*Additional options data - same iterations occur like previous options*/			
+			productObj.field_additional_options_new = [];
+			$.each(productNode.field_additional_options_new.split("||"), function(index, val) {
+				
+				val = val.replace('(**Should only display for Pro Sports and Pro Control Panels**)','');
+				
+				var consoleProp;
+
+				if(val.indexOf('(**Other Options does not display**)') > -1) {
+					consoleProp = '';
+				}
+				else {
+					consoleProp = val.split("|");
+				}
+				
+				if(!isBlank(consoleProp)){
+					productObj.field_additional_options_new.push({
+						id: index,
+						name: $.trim(consoleProp[0]),
+						info: $.trim(consoleProp[1]),
+						price: $.trim(consoleProp[2].replace(/,/g,""))
+					});
+				}
+			});
+			/* Push entire object into the global array for later use */
+			productObjArray.push(productObj);
+                       // console.log(productObj)
+		});
+	
+	}
+	
+	
+	function enableForm(){
+		$("#configurator-overlay").css({display: "none"});
+		$configuratorForm.find("#selectMarket").attr('disabled',false);
+		$configuratorForm.find("#selectIndustry").attr('disabled',false);
+	}
+	
+	/* onLoad section */
+	function initialLoad(){
+		$selectIndustryControl.hide();
+		/* This section determines how the window and the steps within the window will be built */
+		
+		// Slider window for before and after results
+	
+		$configuratorWrapper.width(configuratorWrapperWindowWidth);
+
+		// Slider container for before and after results
+		$configuratorWrapperPane.css({
+			width: configuratorWrapperWindowWidth * 2
+		});
+		
+		// Configurator container
+		$configuratorContainer.css({
+			"width": configuratorWrapperWindowWidth,
+			"float": "left"
+		});
+
+		// Configurator results container
+		$configuratorResultsContainer.css({
+			"width": configuratorWrapperWindowWidth,
+			"float": "left"
+		});
+		
+		// Configurator container steps window
+		$configuratorStepsWindow.css({
+			width: stepWidths
+		});							
+
+		// Configurator container steps container for sliding
+		$configuratorStepsPanel.css({
+			width: stepWidths * stepCount,
+			height: firstStepHeight
+		});
+
+		// Configurator container individual steps
+		$configuratorSteps.css({
+			"width": stepWidths,
+			"float": "left"
+		});
+
+		// Previous button
+		$prevButton.click(function(e){
+			e.preventDefault();
+			prevStep();
+		});
+
+		// Next button
+		$nextButton.click(function(e){
+			e.preventDefault();
+			if(AJAXDONE) nextStep();
+		});
+		
+		// submit button
+		$submitRequest.click(function(e){
+			e.preventDefault();
+			$configuratorForm.submit();			
+		});
+		
+                //submit final order
+                $submitOrder.click(function(e){
+						$("#configurator-overlay").css({display: "block"});
+                        //e.preventDefault();
+                        submitAJAXfinalOrder();
+                        //$configuratorForm.submit();			                       
+                });
+                
+		$('.configurator-printbutton').click(function(e){
+			e.preventDefault();
+			//$(".printable").print();
+			window.print();
+		});
+		
+		$configuratorStepsPanel.filter('.first-step').height($configuratorSteps.height());
+		$configuratorWrapper.height($('.configurator-container').height());
+		showhideButtons(0);
+		zeroOutTotal();
+		
+	}
+	
+	/*
+	* This function will be called only after all the data is loaded and form is enabled so that it is available in the drop down
+	*This function will make the home-fitness market selected by default and load all the values for home fitness
+	*/
+	function defaultMarketSelected(){
+		// after everything is loaded
+		userModelCollection = getModels("Home Fitness","");
+		renderModels(userModelCollection);
+		isCommercial = false;
+		$('.msrp-discount').css('visibility','hidden');
+		$('.config-results-msrp-discount, .config-results-msrp-subtotal').show();	
+	}
+
+	
+	/* 	This is where the configurator for acts as a delegate for all events occurring within 
+		Also, the form validator resides in here
+	*/
+	function attachFormHandler(){
+		$configuratorForm.validate({	
+			rules: {
+				postalcode: {
+						postalcode: true
+					}
+			},
+			submitHandler: function(form) {
+				renderTable(form);
+                                $sharePrint.hide();
+                                //$resultsHeader.hide();
+                                $submitOrder.hide();   
+								$("#configurator-overlay").css({display: "block"});
+                                $("#configurator-results-container-inner .config-results-machine #submissionID").hide();
+				shiftToResults();
+				submitAJAX();
+			}		
+		});	
+		
+		$('#dealer-info-form').change(function(e){
+			var $targetEl = $(e.target);
+			var targetVal = $targetEl.val();
+			var targetName = $targetEl.attr('name');
+			
+			$('#results-' + targetName).text(targetVal);
+			
+		});
+
+		/* All changes to the form are caught here.	*/
+		$configuratorForm.change(function(e){
+			var $targetEl = $(e.target);
+			var $parentEl = $targetEl.parents('.configurator-step');
+			var targetVal = $targetEl.val();
+			
+			var userModelCollection;
+			var userModel;
+
+			/* If form changes are occuring in the Market Type Step	*/
+			if($parentEl.hasClass('market-type-step')){
+				targetVal = targetVal.replace("&","&amp;");
+			
+				if (targetVal == 'Home Fitness'){
+					$selectIndustryControl.hide();
+					userModelCollection = getModels("Home Fitness","");
+					renderModels(userModelCollection);
+					isCommercial = false;
+					$('.msrp-discount').css('visibility','hidden'); // hide the discount text on both
+					$('.config-results-msrp-discount, .config-results-msrp-subtotal').show();
+				}
+				
+				else if (targetVal == 'Commercial Fitness'){
+					$selectIndustryControl.show();
+					$('.msrp-discount').css('visibility','hidden');
+					$('.config-results-msrp-discount, .config-results-msrp-subtotal').hide();
+					isCommercial = true;
+				}
+				
+				if ($.inArray(targetVal,marketOptionList) > -1){
+					userModelCollection = getModels("Commercial Fitness",targetVal);
+					renderModels(userModelCollection);
+				}
+				
+				else {
+					//alert($targetEl.val() + ' not in Market Type Array');
+				}
+				
+				zeroOutTotal();
+			} 
+			
+			/* User is acting on model step step */
+			else if ($parentEl.hasClass('model-step')) {
+				zeroOutTotal();
+				userModel = getModel($targetEl.data('modelID'));
+				renderOptions(userModel);
+				
+				$(".hover-tip").tooltip({
+					showURL: false,
+					top: -30,
+					left: 5,
+					delay: 0,
+					track: true,
+					positionLeft: false
+				});				
+			}
+
+			/* User is acting on control panel step */
+			else if ($parentEl.hasClass('control-panel-step')) {
+				
+				if (targetVal.indexOf(PROPANEL) > -1){
+					$(this).find('input[value*="' + BROADCASTVISION + '"]').attr('checked', false).parent('label').hide();
+				}
+				
+				else {
+					$(this).find('input[value*="' + BROADCASTVISION + '"]').attr('checked', false).parent('label').show();
+				}
+				
+				if ((targetVal.indexOf(PROPANEL) > -1) || (targetVal.indexOf(PROSPORTSPANEL) > -1)){
+					$(this).find('input[value*="' + ACCUTRACKCONTACT + '"]').parent('label').show();
+				}
+				
+				else {
+					$(this).find('input[value*="' + ACCUTRACKCONTACT + '"]').attr('checked', false).parent('label').hide();
+				}
+				
+                                //Display Cardio Theater and Broadcast Vision only for Pro Panel (Pro Trainer)
+                                
+				if ((targetVal.indexOf(PROPANEL) > -1)){
+                                    $(this).find('input[value*="' + CARDIOTHEATER_BROADCASTVISION + '"]').parent('label').hide();
+				}				
+				else {
+                                    $(this).find('input[value*="' + CARDIOTHEATER_BROADCASTVISION + '"]').parent('label').show();					
+				}
+
+
+
+
+			}
+			
+			/* If user is entering in personal information, so far do nothing */
+			else if ($parentEl.hasClass('information-step')) {
+			}
+			
+
+			/* If form changes are occuring where there are prices, update the running total on the fly */
+			if ($parentEl.hasClass('price-changer')){
+				updateTotal();
+			}
+
+		});
+
+	}
+	
+	function submitAJAX(){
+			var resultsClone = $("#configurator-results-html-block").clone();
+			
+			resultsClone.addClass('config-results-for-drupal');
+
+			$("#edit-submitted-page-container").val(resultsClone.html());
+                        $("#edit-submitted-client-email").val($configuratoResultsSection.find('td#results-inputEmail').text());
+                        $("#edit-submitted-order-status").val("reviewed");
+			
+			$.ajax({
+			  type: "POST",
+			  url: "/node/392",
+			  data: $("#webform-client-form-392").serialize(),
+			  dataType: 'json'
+			}).done(function( msg ) { 
+                                if( msg['nodes'][0]['php']=="" ||  msg['nodes'][0]['php']=='0'){ 
+                                        /*console.log("Error: From POST error: 0"); */
+                                } else { 
+                                    //hide the top part
+                                    $("#submissionID").val(msg['nodes'][0]['php']);
+                                    $submitOrder.show();      
+									$("#configurator-overlay").css({display: "none"});
+                                }
+			});
+	}
+
+
+        function submitAJAXfinalOrder(){
+			$.ajax({
+			  type: "POST",
+			  url: "/configurator-server-response",
+			  data: {ostatus : 'ordered', sid : $("#submissionID").val()},
+			  dataType: 'json'
+			}).done(function( msg ) { 
+                            //console.log(msg);
+					if( msg['nodes'][0]['php']=="" ||  msg['nodes'][0]['php']=='0'){ 
+						//console.log("Error: From POST error: 0"); 
+					} else { 
+									$("#configurator-overlay").css({display: "none"});
+                                    $sharePrint.show();
+									$(".config-results-table.config-results-submit").hide();
+                                    $resultsHeader.html("<h3>Congratulations! Your order request has been received!</h3>\
+									<p>Thank you for your order.</p>\
+									<p>We will send you an email with the name and contact information of your assigned fitness specialty dealer before the close of our next business day. If you have any questions feel free to contact us at 1-800-LANDICE.</p>\
+									");
+                                    $submitOrder.hide();
+                                    //shiftToResults();
+                                    $configuratorWrapper.animate({ height: $configuratorResultsContainer.height()});
+	/*function shiftToResults(){
+		$configuratorWrapper.animate({
+			height: $configuratorResultsContainer.height()
+		});
+		$configuratorWrapperPane.animate({
+			marginLeft: '-=' + configuratorWrapperWindowWidth
+		});
+	}*/                                    
+                                            
+                                            $("#submissionID").val(msg['nodes'][0]['php']);
+                                            //console.log("Its success" + msg['nodes'][0]['php']);
+                                        }
+			});   
+        }
+
+	/* Update the running total.  Grab the current total, if needed to compare between old and new values
+	   Run through the entire form and look for all inputs with a "productOptions" class.  Check to see if it's
+	   'Checked', grab it's data-price value, and add it to the new total.  Update the running total section accordingly.
+	*/
+	function updateTotal(){
+		var newTotal = 0;
+		var newSubtotal = 0;
+		var newDiscounttotal = 0;
+		$configuratorSteps.filter('.viewed, .viewing').find('.productOptions:checked').each(function(){
+			if($(this).data('price') !== ''){
+				var thisPrice = $(this).data('price');
+			
+				newDiscounttotal += thisPrice * PERCENTDISCOUNTED;
+				newSubtotal += thisPrice;
+				newTotal += thisPrice * PERCENTDISCOUNT;
+                                //newTotal += thisPrice;// we display discount on final page only
+			}
+		});
+		
+		if(newTotal !== 0){
+			if (isCommercial) $runningTotal.text(toUSD(newSubtotal));
+			else 
+                            { 
+                                $runningTotal.text(toUSD(newSubtotal)); // just use new subtotal even for home fitness i.e don't display discount on the steps                             
+                                //$runningTotal.text(toUSD(newTotal)); 
+                            }
+			
+			if (isCommercial) $runningTotalVal.val(toUSD(newSubtotal+200));
+			else $runningTotalVal.val(toUSD(newTotal+200)); // add 200 for shipping and handling
+			
+			if (!isCommercial) $runningSubtotalTotalVal.val(toUSD(newSubtotal));
+			if (!isCommercial) $runningSubtotalDiscountVal.val(toUSD(0- newDiscounttotal));
+		}
+	}
+
+	/* Render Model picker */
+	function renderModels(models){
+		var html = '';
+		
+		if(models.length){
+			$.each(models, function(index,val){
+				html += radioGroupHtml('radio','productOptions','optionsModel',this.id,'',this.field_product_node_reference,'');
+			});
+			
+			$modelControlGroup.html(html);
+		}
+		
+		else {
+			$modelControlGroup.html("<p>Models do not exist</p>");
+		}
+	}
+
+	/* 	Render Options 
+		Generate HTML for radio/checkbox groups
+		
+		Options are further group by types of options (control panels, suspension options, entertainment options
+	*/
+	function renderOptions(model){
+		var html = '';
+		/* Control panels */
+		if(model.field_control_panel_new.length){
+			$.each(model.field_control_panel_new, function(index,val){
+				html += radioGroupHtml('radio','productOptions','optionsCP',this.id,this.price,this.name,'');
+			});
+			
+			$controlPanelControlGroup.html(html);
+			$controlPanelControlGroup.parent(".configurator-step").removeClass("skip");
+		}
+		
+		else {
+			$controlPanelControlGroup.html("<p>Control Panels do not exist</p>");
+			$controlPanelControlGroup.parent(".configurator-step").addClass("skip");
+		}
+
+		html = ''
+		/* Suspension/Entertainment/additional options */
+
+		if(model.field_suspension_options_new.length || model.field_entertainment_options_new.length || model.field_additional_options_new.length) {
+
+			if(model.field_suspension_options_new.length){
+				$.each(model.field_suspension_options_new, function(index,val){
+				// check if suspension options has value VFX Shock Absorption Suspension System and we make then as standard and will be checked by default
+				optionsValue = String(this.name); //convert to string
+				//strpos = optionsValue.search("(Default)"); // this can be used later			
+				if(optionsValue.search("VFX Shock Absorption Suspension System") == -1){
+					checkStatus = 'uchecked';
+				}else {
+					checkStatus = 'checked';
+				}
+				html += radioGroupHtml('radio','productOptions','optionsSuspension',this.id,this.price,this.name.replace('Default','Standard'),this.info,checkStatus);
+				});
+				
+				$suspensionControlGroup.html(html);
+				$suspensionControlGroup.prev('.configurator-step-title').show();
+			}
+			
+			else {
+				$suspensionControlGroup.html('');
+				$suspensionControlGroup.prev('.configurator-step-title').hide();
+			}
+			
+			html = ''
+			var htmlCheck = '';
+			if(model.field_entertainment_options_new.length){
+				html += radioGroupHtml('radio','productOptions','optionsEntertainment','NoChoice','0.00','No Options','','unchecked');
+				
+				$.each(model.field_entertainment_options_new, function(index,val){
+					if(this.option_type == 'Radio'){
+						html += radioGroupHtml('radio','productOptions','optionsEntertainment',this.id,this.price,this.name,this.info,'unchecked');
+					}
+					
+					else if (this.option_type == 'CheckBox'){
+						htmlCheck += radioGroupHtml('checkbox','productOptions','optionsEntertainmentExtra',this.id,this.price,this.name,this.info,'unchecked')
+					}
+				});
+				
+				$entertainmentControlGroup.html(html);
+				$entertainmentControlGroup.prev('.configurator-step-title').show();
+				
+				if(!isBlank(htmlCheck)){
+					$entertainmentextraControlGroup.addClass('notempty').html(htmlCheck);
+				}
+				
+				else {
+					$entertainmentextraControlGroup.removeClass('notempty').html('');
+				}
+			}
+			
+			else {
+				$entertainmentControlGroup.html("<p>Entertainment options do not exist</p>");
+				$entertainmentControlGroup.prev('.configurator-step-title').hide();
+			}
+			
+			html = ''
+
+
+			/* Additional options */
+			if(model.field_additional_options_new.length){
+				/* Generate Checkboxes by default */
+				$.each(model.field_additional_options_new, function(index,val){
+					html += radioGroupHtml('checkbox','productOptions','optionsAddtionalOptions',this.id,this.price,this.name,this.info,'unchecked');
+				});
+							
+				$additionalControlGroup.html(html);
+				$additionalControlGroup.prev('.configurator-step-title').show();
+			}
+			
+			else {
+				$additionalControlGroup.html("<p>Additional options do not exist</p>");
+				$additionalControlGroup.prev('.configurator-step-title').hide();
+			}
+			
+			$suspensionControlGroup.parent(".configurator-step").removeClass("skip");
+		}
+		/* If none of these options exists display empty messaging */
+		else {
+			$suspensionControlGroup.parent(".configurator-step").addClass("skip");
+			$additionalControlGroup.html("").prev('.configurator-step-title').hide();
+			$entertainmentControlGroup.html("").prev('.configurator-step-title').hide();
+			$entertainmentextraControlGroup.html("").prev('.configurator-step-title').hide();
+			$suspensionControlGroup.html("").prev('.configurator-step-title').hide();
+		}
+		
+	}
+	
+	
+	/* Clear out total when changing Market Industry Fields */
+	function zeroOutTotal(){
+		$runningTotal.text('$0.00');
+		$runningTotalVal.val('$0.00');
+		$configuratorSteps.removeClass("viewed");
+	}
+	
+	/*
+		When prevStep button is clicked slide accordingly
+	*/
+	function prevStep(){
+		
+		var currentStep = $configuratorSteps.filter(".viewing").index();
+		/* do not animate if slide is 0 or it is currently animating*/
+		if(!slideAnimating && currentStep > 0){
+			
+			slideAnimating = true;
+
+			var newHeight = $configuratorSteps.eq(currentStep - 1).height();
+			
+			
+			$configuratorSteps.eq(currentStep).addClass("viewed");
+			$configuratorSteps.removeClass("viewing");
+			
+			$configuratorStepsPanel.stop().animate({
+				marginLeft: '+=' + stepWidths,
+				height: newHeight
+			},SLIDESPEED,function(){
+				slideAnimating = false;
+				currentStep--;
+				$configuratorSteps.eq(currentStep).addClass("viewing");
+				$configuratorWrapper.stop().animate({
+					height: $('.configurator-container').height()
+				}, 500);
+				
+				showhideButtons(currentStep);
+				updateMarkers(currentStep);
+			});
+		}
+	}
+	
+	jQuery(document).ready(function($){ 
+		$(window).resize(function(){
+			$configuratorWrapper.stop().animate({
+					height: $('.configurator-container').height()
+			}, 500);
+		});
+	});
+	
+	/*
+		When nextStep button is clicked slide accordingly
+		AND also validate that step before moving on
+	*/
+	function nextStep(){
+		var currentStep = $configuratorSteps.filter(".viewing").index();
+		if(!slideAnimating && currentStep < stepCount - 1 && validateStep($configuratorSteps.eq(currentStep))){
+			slideAnimating = true;
+			
+			
+			var newHeight = $configuratorSteps.eq(currentStep + 1).height();
+			
+			$configuratorSteps.eq(currentStep).addClass("viewed");
+			$configuratorSteps.removeClass("viewing");
+			
+			updateTotal();
+			
+			$configuratorStepsPanel.animate({
+				marginLeft: '-=' + stepWidths,
+				height: newHeight
+			},SLIDESPEED,function(){
+				slideAnimating = false;
+				currentStep++;
+				$configuratorSteps.eq(currentStep).addClass("viewing");
+				$configuratorWrapper.stop().animate({
+					height: $('.configurator-container').height()
+				}, 500);
+				
+				showhideButtons(currentStep);
+				updateMarkers(currentStep);
+			});
+		}
+	}
+	
+	function submitStep(){
+		$configuratorForm.submit();
+	}
+
+	//Show buttons according to the step
+	function showhideButtons(currentStep){
+		if(currentStep == stepCount - 1){
+			$nextButton.hide();
+			$submitRequest.show();
+		}
+		else { //last step
+			$nextButton.show();
+			$submitRequest.hide();
+		}
+
+		// hide help box on all the steps
+		if(currentStep < stepCount - 1){
+			$configuratorHelp.hide();
+		}else {
+			$configuratorHelp.show();		
+		}
+		
+		if(currentStep == 0) $prevButton.hide();
+		else $prevButton.show();
+	}
+
+	function updateMarkers(currentStep){
+		$configuratorMarkers.removeClass('selected')
+		$configuratorMarkers.eq(currentStep).addClass('selected');
+	}
+
+	/*
+		Validate form elements within each step
+	*/	
+	function validateStep($currentStep){
+		var currentStepIndex = $currentStep.index()
+		
+		//Market Type/Industry selector
+		if(currentStepIndex == 0){
+			var selectedMarket = $configuratorForm.find("#selectMarket").val();
+			var selectedIndustry = $configuratorForm.find("#selectIndustry").val();
+			
+			//Choose an industry
+			if(selectedMarket == 'Commercial Fitness' && selectedIndustry == 'Market'){ // updated to v1 (changed Market Type to Market)
+				$configuratorForm.find("#selectIndustry").addClass("error");
+				return false;
+			}
+			
+			else {
+				$configuratorForm.find("#selectIndustry").removeClass("error");
+				return true;
+			}
+		}
+		
+		//Validate radio buttons
+		else if (currentStepIndex == 1 || currentStepIndex == 2 || currentStepIndex == 3){
+			var isChecked = true;
+			
+			if(!($currentStep.hasClass('skip'))){
+				$currentStep.find('.radio-control-group:visible').not(':empty').each(function(){
+					if(!$(this).find(":checked").length) {
+						$(this).prev('p.configurator-step-title').addClass('error');
+						isChecked = false;
+					}
+					
+					else {
+						$(this).prev('p.configurator-step-title').removeClass('error');
+						isChecked = true;
+					}
+				});
+			}
+			
+			return isChecked;
+		}
+		
+		//Validate userinfo
+		else if (currentStepIndex == 4){ 
+			var fieldsValid = true;
+			
+			return fieldsValid;
+		}
+		
+		
+		return true;
+	}
+ 
+	/* Generate HTML for radio and checkboxes */
+	function radioGroupHtml(type,cssClass,inputName,id,price,label,hover,checkstatus){
+		var defaultHtml = ''
+		
+		if(id == 'NoChoice' || checkstatus == 'checked'){
+			 defaultHtml = 'checked';
+		}
+		
+		
+		
+		var hoverhtml = '';
+		
+		if(!isBlank(hover) && (hover != 'n/a')){
+			hoverhtml = "<a href='#' class='hover-tip' title='" + hover + "'></a>";
+		}
+	
+		var html = "<label class='" + type +"' for='" + inputName + id + "'><input type='" + type +"' class='" + cssClass +"' name='" + inputName +"' id='" + inputName + id +"' value='" + label + "' data-modelID='" + id + "' data-price='" + price + "'" + defaultHtml+ ">" + label + hoverhtml +"</label>";
+		return html;
+	}
+	
+	function renderTable(form){
+	
+		//Process The user info and dropdowns
+		$(form).find('.information-step input, .market-type-step select, .model-step input:checked, .control-panel-step input:checked, .suspension-entertainment-additional-step #suspension-control-group input:checked').each(function(){
+			var inputName = $(this).attr('name');
+			var inputVal = $(this).val();
+			var inputPrice = $(this).data('price');
+		
+			if(inputVal == 'Market') { // updated to v1 changed Market Type to Market
+				$configuratoResultsSection.find('td#results-' + inputName, '#results-' + inputName + '-mobile').text(''); 
+				
+			}
+			
+			else if (inputName == 'optionsCP'){
+				$configuratoResultsSection.find('td#results-' + inputName).text(inputVal); 
+				$configuratoResultsSection.find('td#results-optionsModelPrice').text(toUSD(inputPrice));
+			}
+			 
+			else if (inputName == 'optionsModel'){
+				$configuratoResultsSection.find('td#results-' + inputName).text(inputVal); 
+				$configuratoResultsSection.find('td#results-optionsCPPrice').text(''); 
+			}
+		
+			else {
+				$configuratoResultsSection.find('td#results-' + inputName,'#results-' + inputName +'-mobile').text(inputVal);
+				$configuratoResultsSection.find('td#results-' + inputName + 'Price').text(toUSD(inputPrice)); 
+			}
+		});
+		
+		
+		var runningEntertainmentPrice = 0;
+		var runningEntertainmentStrings = [];
+		
+		$(form).find('#entertainment-control-group input:checked, #entertainmentextra-control-group input:checked').each(function(){
+			var inputName = $(this).attr('name');
+			var inputVal = $(this).val();
+			var inputPrice = $(this).data('price');
+			
+		
+			if(inputVal != 'No Options') {
+				runningEntertainmentPrice += inputPrice;
+				runningEntertainmentStrings.push(inputVal);
+			}
+			
+			else if (inputVal == 'No Options'){
+			}
+			
+		});
+		
+		$configuratoResultsSection.find('td#results-optionsEntertainment').text(runningEntertainmentStrings.join(', '));
+		$configuratoResultsSection.find('td#results-optionsEntertainmentPrice').text(toUSD(runningEntertainmentPrice)); 
+		
+		var runningAdditionalPrice = 0;
+		var runningAdditionalStrings = [];
+
+		$(form).find('#additional-control-group input:checked').each(function(){
+			var inputName = $(this).attr('name');
+			var inputVal = $(this).val();
+			var inputPrice = $(this).data('price');
+			
+			runningAdditionalPrice += inputPrice;
+			runningAdditionalStrings.push(inputVal);
+			
+		});
+		
+		$configuratoResultsSection.find('td#results-optionsAddtionalOptions').text(runningAdditionalStrings.join(', '));
+		$configuratoResultsSection.find('td#results-optionsAddtionalOptionsPrice').text(toUSD(runningAdditionalPrice));
+		
+		$configuratoResultsSection.find('td#results-msrp-subtotal').text($runningSubtotalTotalVal.val());
+		$configuratoResultsSection.find('td#results-msrp-discount').text(($runningSubtotalDiscountVal.val()));
+		$configuratoResultsSection.find('td#results-msrp-total').text($runningTotalVal.val());
+		
+	}
+	
+	function isBlank(str) {
+		return (!str || /^\s*$/.test(str));
+	}
+	
+	function toUSD(number) {
+		if(number !== undefined){
+			var negativeSign = '';
+			if(number < 0) {
+				negativeSign = '-';
+				number = Math.abs(number);
+			}
+			
+			var number = number.toString(), 
+			dollars = number.split('.')[0], 
+			cents = (number.split('.')[1] || '') +'00';
+			dollars = dollars.split('').reverse().join('')
+				.replace(/(\d{3}(?!$))/g, '$1,')
+				.split('').reverse().join('');
+				
+			
+			return negativeSign + '$' + dollars + '.' + cents.slice(0, 2);
+		}
+		
+		else return '';
+	}
+	
+	function shiftToResults(){
+		$configuratorWrapper.animate({
+			height: $configuratorResultsContainer.height()
+		});
+		$configuratorWrapperPane.animate({
+			marginLeft: '-=' + configuratorWrapperWindowWidth
+		});
+	}
+	
+	$.validator.addMethod("postalcode", function(postalcode, element) {
+	return this.optional(element) || postalcode.match(/(^\d{5}(-\d{4})?$)|(^[ABCEGHJKLMNPRSTVXYabceghjklmnpstvxy]{1}\d{1}[A-Za-z]{1} ?\d{1}[A-Za-z]{1}\d{1})$/);}, "Please specify a valid postal/zip code");
+
+
+	// Create a jquery plugin that prints the given element.
+	$.fn.print = function(){
+		// NOTE: We are trimming the jQuery collection down to the
+		// first element in the collection.
+		if (this.size() > 1){
+			this.eq( 0 ).print();
+			return;
+		} else if (!this.size()){
+			return;
+		}
+		
+		var $THISclone = this.clone(false);
+		
+		$THISclone.find('.notPrintable').hide().end().find('.showinPrint').show();
+
+		
+	 
+		// ASSERT: At this point, we know that the current jQuery
+		// collection (as defined by THIS), contains only one
+		// printable element.
+	 
+		// Create a random name for the print frame.
+		var strFrameName = ("printer-" + (new Date()).getTime());
+	 
+		// Create an iFrame with the new name.
+		var jFrame = $( "<iframe name='" + strFrameName + "'>" );
+	 
+		// Hide the frame (sort of) and attach to the body.
+		jFrame
+			.css( "width", "1px" )
+			.css( "height", "1px" )
+			.css( "position", "absolute" )
+			.css( "left", "-9999px" )
+			.appendTo( $( "body:first" ) )
+		;
+	 
+		// Get a FRAMES reference to the new frame.
+		var objFrame = window.frames[ strFrameName ];
+	 
+		// Get a reference to the DOM in the new frame.
+		var objDoc = objFrame.document;
+	 
+		// Grab all the style tags and copy to the new
+		// document so that we capture look and feel of
+		// the current document.
+	 
+		// Create a temp document DIV to hold the style tags.
+		// This is the only way I could find to get the style
+		// tags into IE.
+		/*var jStyleDiv = $( "<div>" ).append(
+			$( "style" ).clone()
+			);*/
+	 
+		// Write the HTML for the document. In this, we will
+		// write out the HTML of the current element.
+		objDoc.open();
+		objDoc.write( "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">" );
+		objDoc.write( "<html>" );
+		objDoc.write( "<body>" );
+		objDoc.write( "<head>" );
+		objDoc.write( "<title>" );
+		objDoc.write( document.title );
+		objDoc.write( "</title>" );
+		//objDoc.write( jStyleDiv.html() );
+		objDoc.write( "</head>" );
+		objDoc.write( $THISclone.html() );
+		objDoc.write( "</body>" );
+		objDoc.write( "</html>" );
+		objDoc.close();
+	 
+		// Print the document.
+		objFrame.focus();
+		objFrame.print();
+	 
+		// Have the frame remove itself in about a minute so that
+		// we don't build up too many of these frames.
+		/*setTimeout(
+			function(){
+				jFrame.remove();
+			},
+			(60 * 1000)
+			);*/
+	}	
+	
+})(jQuery);
