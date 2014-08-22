@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html ng-app="snackCentral">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="favicon.ico">
+
+    <title>Kitchen Snack Central</title>
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="css/kitchenview.css" rel="stylesheet">
+<script type="text/javascript" src="js/angular.min.js"></script>
+<script type="text/javascript" src="js/app.js"></script>
+  <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+   <body ng-controller="KitchenController as kitchen">
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          
+          <img src="img/logo.png" class="navbar-brand pull-right snack-logo" alt="logo">
+        </div>
+
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#">Don't see anything you like? Request a New Snack</a></li>
+          </ul>
+          
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar">
+            <li ><a href="index.html">Kitchen Snack Central</a></li>
+            <li class="active"><a href="view.html">Reviews</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="https://www.groupize.com/"target="_blank">Groupize</a></li>
+          </ul>
+          
+        </div>
+        <br/>
+        <br/>
+        <br/> 
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          
+       
+    <!--  Snack Header  -->
+    <header>
+      <h1 class="text-center">Kitchen Snack Reviews</h1>
+      <h2 class="text-center">Powered by Angular</h2>
+    </header>
+
+    <!--  Kitchen Central Container  -->
+    <div class="list-group">
+      <!--  Snack Container  -->
+      <div class="list-group-item" ng-repeat="snack in kitchen.snacks">
+        <h3>{{snack.name}} <em class="pull-right">{{snack.calories}} Calories Per Serving</em></h3>
+
+        <!-- Image Gallery  -->
+        <snack-gallery></snack-gallery> 
+
+        <!-- Snack Tabs  -->
+        <snack-tabs></snack-tabs>
+
+      </div>
+    </div>
+  </body>
+ 
+    <!--  Core JavaScript Includes 
+    ================================================== -->
+    <!--  loads faster at the end of document -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/ali.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="js/ie10-viewport-bug-workaround.js"></script>
+  </body>
+</html>
+ 
