@@ -1,0 +1,165 @@
+(function() {
+  var app = angular.module('snackCentral', []);
+
+  
+  app.directive('snackGallery',function() {
+    return {
+      restrict: 'E', 
+      templateUrl: "snack-gallery.html",
+      controller: function() {
+       this.current = 0;
+      this.setCurrent = function(imageNumber){
+      this.current = imageNumber || 0; };
+     },
+       controllerAs: "gallery"
+    };
+  });
+  
+
+  app.controller('KitchenController', function() {
+    this.snacks = kitchenSnacks;
+  });
+
+  app.controller("ReviewController", function(){
+
+    this.review = {};
+
+    this.addReview = function(snack){
+      snack.reviews.push(this.review);
+      this.review = {};
+    };
+
+  });
+
+  app.directive("snackDescriptions", function() {
+    return {
+      restrict: 'E',
+      templateUrl: "snack-description.html"
+    };
+  });
+
+  app.directive("snackReviews", function() {
+    return {
+      restrict: 'E',
+      templateUrl: "snack-reviews.html"
+    };
+  });
+
+  app.directive("snackSpecs", function() {
+    return {
+      restrict:"A",
+      templateUrl: "snack-specs.html"
+    };
+  });
+
+  app.directive("snackTabs", function() {
+    return {
+      restrict: "E",
+      templateUrl: "snack-tabs.html",
+      controller: function() {
+        this.tab = 1;
+
+        this.isSet = function(checkTab) {
+          return this.tab === checkTab;
+        };
+
+        this.setTab = function(activeTab) {
+          this.tab = activeTab;
+        };
+      },
+      controllerAs: "tab"
+    };
+  });
+
+  var kitchenSnacks = [
+    {
+      name: 'Bananas',
+      description: "Peel 'em, then eat 'em",
+      calories: 100 ,
+      refill: '1 (of 10)',
+      color: '#CCC',
+      images: [
+        "img/banana.jpg",
+        "img/bansm.jpg",
+        "img/bansm.jpg"
+      ],
+      reviews: [{
+        stars: 5,
+        body: "I love these bananas!",
+        author: "joe@example.org"
+      }, {
+        stars: 1,
+        body: "This banana was ripe.",
+        author: "tim@example.org"
+      }]
+    }, {
+      name: 'Popcorn',
+      description: "A variety of corn, Zea mays everta, having hard kernels that burst to form white, irregularly shaped puffs when heated. Also, the edible popped kernels of this corn",
+      calories: 53 ,
+      refill: '6 (of 12)',
+      color: '#CCC',
+      images: [
+        "img/popcorn.jpg",
+        "img/popcorn.jpg",
+        "img/popcorn.jpg"
+      ],
+      reviews: [{
+        stars: 3,
+        body: "I think this popcorn was just OK, could honestly use more butter",
+        author: "JimmyDean@example.org"
+      }, {
+        stars: 4,
+        body: "I can eat this popcorn all day!",
+        author: "janetRocks@example.org"
+      }]
+      }, {
+        name: 'Candy Basket of Doom',
+        description: "A collection of candy, ever-changing",
+        calories: 12 ,
+        refill: '2 (of 3)',
+        color: '#CCC',
+        images: [
+          "img/candy.jpg",
+          "img/candy.jpg",
+          "img/candy.jpg"
+        ],
+        reviews: [{
+          stars: 1,
+          body: "This wow, great selection of candy",
+          author: "turtleguyy@example.org"
+        }, {
+          stars: 1,
+          body: "this is my favorite snack",
+          author: "LouisW407@example.org"
+        }, {
+          stars: 1,
+          body: "i love the butterfingers",
+          author: "nat@example.org"
+        }]
+    },{
+        name: "Tiger's Tears",
+        description: "A Thai-style salad that's awesomely yummy",
+        calories: 75 ,
+        refill: '3 (of 10)',
+        color: '#CCC',
+        images: [
+          "img/thai.jpg",
+          "img/thai.jpg",
+          "img/thai.jpg"
+        ],
+        reviews: [{
+          stars: 1,
+          body: "To Spicy for me!",
+          author: "toughguyy@example.org"
+        }, {
+          stars: 5,
+          body: "Out of this world",
+          author: "johhny@example.org"
+        }, {
+          stars: 1,
+          body: "Not bad , a bit heavy for a salad",
+          author: "george@example.org"
+        }]
+    }
+  ];
+})();
