@@ -1,0 +1,68 @@
+
+$(document).ready(function () {
+
+        $('.carousel').carousel({
+            interval: 7000,
+            pause: "hover"
+        });
+
+        $('#HomeSlider').on('slide.bs.carousel', function (e) {
+            var slideTo = $(e.relatedTarget).index();
+            var i  
+            $('#HomeSlider .carousel-indicators li').removeClass('changing');
+            for (var i = 0; i < 8; i++) {
+            	if(slideTo == i){
+	            	$('#HomeSlider .carousel-indicators #pager'+i).addClass('changing');
+	            }
+            }
+            
+        });
+
+		if($('#HomeSlider').length ) {
+	        $('body').addClass('hide-home');
+	    }
+
+		if(!(jQuery.browser.mobile)) {
+			if($('#HomeSlider').length ) {
+		        $('body').addClass('homepage-body');
+		    }
+
+		    var winH = $(window).innerHeight();
+		Â  Â Â var visibleHeight = $(window).height();
+			var SlideImgHeight = $('#HomeSlider .carousel-inner li .slideimg');
+			var carInnerheight = $('#HomeSlider .carousel-inner');
+			var sliderText = $('#HomeSlider .item .textarea');
+
+		    $("body").height(visibleHeight);
+		    $(SlideImgHeight).css('height', visibleHeight - 375);
+		    $(carInnerheight).css('height', visibleHeight - 65);
+		    $(sliderText).css('height', visibleHeight - 375);
+
+			$(window).resize(function () { 
+				var visibleHeight = $(window).height();
+				$("body").height(visibleHeight);
+				$(SlideImgHeight).css('height', visibleHeight - 375);
+				$(carInnerheight).css('height', visibleHeight - 65);
+				$(sliderText).css('height', visibleHeight - 375);
+			}); 
+
+		}
+
+		$(".popup-link").on('click',function(){
+			$(".carousel").carousel('pause');
+		}); 		
+
+		//Enable swiping...
+		$(".carousel-inner").swipe( {
+			//Generic swipe handler for all directions
+			swipeLeft:function(event, direction, distance, duration, fingerCount) {
+				$(this).parent().carousel('prev'); 
+			},
+			swipeRight: function() {
+				$(this).parent().carousel('next'); 
+			},
+			//Default is 75px, set to 0 for any distance triggers swipe
+			threshold:0
+		});
+
+});
