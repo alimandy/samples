@@ -1,0 +1,31 @@
+function slideSwitch() {
+    var $active = $("#rotator DIV.active");
+    var activeId = $active.attr("id");
+    var $children = $("#rotator DIV.active .leadCont");
+    var size = $("#rotator .lead").size();
+    var $next = $active.next();
+
+    if ($next.find("input").val() == '1' && $("#leadVideos").is(':visible'))
+        $("#leadVideos").fadeOut(500);
+
+    if (activeId.replace("lead", "") == size)
+        $next = $("#lead1");
+    $children.fadeOut(500, function () {
+        $active.addClass('last-active').animate({ opacity: 0.0 }, 1100);
+        $next.css({ opacity: 0.0, display: "block" }).addClass('active').animate({ opacity: 1.0 }, 1100, function () {
+            $next.find(".leadCont").fadeIn(500);
+            $active.hide().removeClass('active last-active');
+            if ($(this).find("input").val() == '0' && $("#leadVideos").is(':hidden'))
+                $("#leadVideos").fadeIn(500);
+        });
+    })
+}
+
+$(document).ready(function () {
+    $("#rotator .lead:first").addClass("active").show();
+    $("#rotator .lead:first .leadCont").show();
+    if ($("#rotator .lead:first input").val() == '1')
+        $("#leadVideos").hide();
+
+    setInterval("slideSwitch()", 7500);
+});
