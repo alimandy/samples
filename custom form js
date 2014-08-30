@@ -1,0 +1,558 @@
+$(document).ready(function () {
+    /* BEGIN CONTACT HR EVENTS */
+    $("#showPopHR").click(function (e) {
+        e.preventDefault();
+        Recaptcha.create(__CaptchaPublicKey, "HRReCaptcha", {
+            theme: "red"//,
+            //callback: Recaptcha.focus_response_field
+        });
+
+        LoadDialog("#popDivHR", "#ContactHRFormThanks", "#ContactHRForm, .spreadFormsLeft p");
+    });
+
+    $("select#HRDescribesField").change(function () {
+        if ($("select#HRDescribesField").val() == "HRNoBenefits") {
+            $("#HRNoBenefitsMessage").show();
+            $("#HRHasBenefitsNoTransitChekMessage").hide();
+        }
+        else {
+            $("#HRNoBenefitsMessage").hide();
+            $("#HRHasBenefitsNoTransitChekMessage").show();
+        }
+    });
+
+    $("#SubmitHRContact").click(function (e) {
+        e.preventDefault();
+        ValidateCaptcha(SubmitHRContactForm);
+    });
+    /* END CONTACT HR EVENTS */
+
+    /* BEGIN CONTACT CO-WORKER EVENTS */
+    $("#showPopCoWorker").click(function (e) {
+        e.preventDefault();
+
+        Recaptcha.create(__CaptchaPublicKey, "CoWorkerReCaptcha", {
+            theme: "red"//,
+            //callback: Recaptcha.focus_response_field
+        });
+
+        LoadDialog("#popDivCoWorker", "#ContactCoWorkerFormThanks", "#ContactCoWorkerForm, .spreadFormsLeft p");
+    });
+
+    $("select#CoWorkerDescribesField").change(function () {
+        if ($("select#CoWorkerDescribesField").val() == "CoWorkerNoBenefits") {
+            $("#CoWorkerNoBenefitsMessage").show();
+            $("#CoWorkerHasBenefitsNoTransitChekMessage").hide();
+        }
+        else {
+            $("#CoWorkerNoBenefitsMessage").hide();
+            $("#CoWorkerHasBenefitsNoTransitChekMessage").show();
+        }
+    });
+
+    $("#SubmitCoWorkerContact").click(function (e) {
+        e.preventDefault();
+        ValidateCaptcha(SubmitCoWorkerContactForm);
+    });
+    /* END CONTACT CO-WORKER EVENTS */
+
+    /* BEGIN SIGN PETITION EVENTS */
+    $("#showPopPetition").click(function (e) {
+        e.preventDefault();
+
+        Recaptcha.create(__CaptchaPublicKey, "PetitionReCaptcha", {
+            theme: "red"//,
+            //callback: Recaptcha.focus_response_field
+        });
+        
+        LoadDialog("#popDivPetition", "#CreatePetitionFormThanks", "#CreatePetitionForm, .spreadFormsLeft p");
+    });
+
+    $("#SubmitPetition").click(function (e) {
+        e.preventDefault();
+        ValidateCaptcha(SubmitPetitionForm);
+    });
+    /* END CONTACT CO-WORKER EVENTS */
+
+    $("#showPopWhitepaperBenefits101").click(function (e) {
+        e.preventDefault();
+        $("#WhitepaperType").val("CommuterBenefits101");
+        ReloadWPForm();
+        LoadDialog2("#popDivWhitepaper", "#WhitepaperFormThanks", "#WhitepaperForm");
+    });
+    $("#showPopWhitepaperDrivingDownCosts").click(function (e) {
+        e.preventDefault();
+        $("#WhitepaperType").val("DrivingDownCosts");
+        ReloadWPForm();
+        LoadDialog2("#popDivWhitepaper", "#WhitepaperFormThanks", "#WhitepaperForm");
+    });
+
+    $(".whitepaperPopLink").click(function (e) {
+        e.preventDefault();
+        ReloadWPForm();
+        $("#WhitepaperId").val($(this).attr("whitepaperid"));
+        $("#WhitepaperTitle").val($(this).attr("title"));        
+        $("#WhitepaperLink").val($(this).attr("whitepaperLink"));
+        LoadDialog2("#popDivWhitepaper", "#WhitepaperFormThanks", "#WhitepaperForm");
+    });
+
+    $("#SubmitWPRequest").click(function (e) {
+        e.preventDefault();
+        SubmitWPDownload();
+    });
+
+    $("#SubmitContactService").click(function (e) {
+        e.preventDefault();
+        if (ValidateContactService()) {
+            var serviceObject = new Object();
+            serviceObject.Id = 0;
+            var radioButtons = $("input:radio[name='CSTypeField']")
+            var selectedType = radioButtons.index(radioButtons.filter(':checked'));
+            serviceObject.ServiceType = selectedType;
+            serviceObject.FirstName = $("#CSFirstNameField").val();
+            serviceObject.LastName = $("#CSLastNameField").val();
+            serviceObject.Company = $("#CSCompanyField").val();
+            serviceObject.ContactPreference = $("#CSPreference").val();
+            serviceObject.PhoneNumber = $("#CSPhoneNumberField").val();
+            serviceObject.Extension = $("#CSExtensionField").val();
+            serviceObject.Email = $("#CSEmailField").val();
+            serviceObject.CurrentCustomer = ($("#CSCurrentCustomerField").val() == "Yes");
+            serviceObject.ContactReason = $("#CSContactReason").val();
+            serviceObject.AdditionalInformation = $("#CSAdditionalInformationField").val();
+
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify(serviceObject),
+                url: __SiteUrl + "TransitService.svc/ContactService",
+                success: function (data) {
+                    serviceObject.Id = data;
+                    $("#ServiceFormRight").hide();
+                    $("#ServiceFormLeft").hide();
+                    $("#ServiceFormLeftThanks").show();
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    //debugging
+                    $("#ServiceError").text("We've encountered an error.  Please try submitting the form again.");
+                    $("#ServiceError").show();
+                }
+            });
+        }
+    });
+
+    $("input:radio[name='SalesTypeField']").change(function (e) {
+        var selection = $("input:radio[name='SalesTypeField']:checked").val();
+        if (selection == "Commuter") {
+            $("#SalesTitleRow").hide();
+            $("#SalesNumberEmployeesRow").hide();
+        }
+        else {
+            $("#SalesTitleRow").show();
+            $("#SalesNumberEmployeesRow").show();
+        }
+    });
+
+    $("#SubmitContactSales").click(function (e) {
+        e.preventDefault();
+        if (ValidateContactSales()) {
+            var salesObject = new Object();
+            salesObject.Id = 0;
+            var radioButtons = $("input:radio[name='SalesTypeField']")
+            var selectedType = radioButtons.index(radioButtons.filter(':checked'));
+            salesObject.SalesType = selectedType;
+            salesObject.FirstName = $("#SalesFirstNameField").val();
+            salesObject.LastName = $("#SalesLastNameField").val();
+            salesObject.Company = $("#SalesCompanyField").val();
+            salesObject.Title = $("#SalesTitleField").val();
+            salesObject.Email = $("#SalesEmailField").val();
+            salesObject.PhoneNumber = $("#SalesPhoneNumberField").val();
+            salesObject.Zip = $("#SalesZipField").val();
+            var numberOfEmployees = parseInt($("#SalesNumberEmployeesField").val());
+            if (isNaN(numberOfEmployees))
+                numberOfEmployees = -1;
+            salesObject.EmployerProvidesBenefits = $("#SalesEmployerProvidesBenefitsField").val();
+            salesObject.EmployerBenefitsWithWhom = $("#SalesEmployerBenefitsWithField").val();
+            salesObject.AdditionalInformation = $("#SalesAdditionalInformationField").val();
+
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify(salesObject),
+                url: __SiteUrl + "TransitService.svc/ContactSales",
+                success: function (data) {
+                    salesObject.Id = data;
+                    $("#SalesFormRight").hide();
+                    $("#SalesFormLeft").hide();
+                    $("#SalesFormLeftThanks").show();
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $("#SalesError").text("We've encountered an error.  Please try submitting the form again.");
+                    $("#SalesError").show();
+                }
+            });
+        }
+    }); //end $("#ContactSalesNextButton").click(function (e) {
+
+});     //end $(document).ready(function () {
+
+function LoadDialog(dialogId, tohide, toshow) {
+    $(dialogId).dialog({
+        show: "fade",
+        hide: "fade",
+        draggable: false,
+        modal: false,
+        dialogClass: 'transitPop',
+        minHeight: 30,
+        width: 960,
+        closeText: ' ',
+        closeOnEscape: true,
+        close: function () {
+            $(toshow).show();
+            $(tohide).hide();
+        }
+    });
+}
+
+function LoadDialog2(dialogId, tohide, toshow) {
+    $(dialogId).dialog({
+        show: "fade",
+        hide: "fade",
+        draggable: false,
+        modal: false,
+        dialogClass: 'transitPop transitPop750',
+        minHeight: 30,
+        width: 750,
+        closeText: ' ',
+        closeOnEscape: true,
+        close: function () {
+            $(toshow).show();
+            $(tohide).hide();
+        }
+    });
+}
+
+function ValidateCaptcha(callback) {
+    var captchaData = { challenge: Recaptcha.get_challenge(), response: Recaptcha.get_response() };
+    $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        data: JSON.stringify(captchaData),
+        url: __SiteUrl + "TransitService.svc/VerifyCaptcha", //"http://localhost:88/TransitService.svc/VerifyCaptcha",
+        success: function (data) {
+            //returns JSON with attribute 'VerifyCaptchaResult' that has a boolean value
+            if (data.VerifyCaptchaResult === true || data.VerifyCaptchaResult === "true")
+                callback(true);
+            else
+                callback(false);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            callback(false);
+        }
+    });
+    //return returnResult;
+}
+
+function SubmitHRContactForm(returnResult) {
+    if (returnResult) {
+        $("#HRReCaptchaError").hide();
+        if (ValidateHRForm()) {
+            var hrObject = new Object();
+            hrObject.Name = $("#HRNameField").val();
+            hrObject.OfficeEmail = $("#HROfficeEmailField").val();
+            hrObject.ContactName = $("#HRSupervisorNameField").val();
+            hrObject.ContactEmail = $("#HRSupervisorEmailField").val();
+            hrObject.EmailSubject = $("#HRSubjectField").val();
+            hrObject.DescribesMe = $("#HRDescribesField").prop("selectedIndex");
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify(hrObject),
+                url: __SiteUrl + "TransitService.svc/ContactHR",
+                success: function (data) {
+                    $(".spreadFormsLeft p").hide();
+                    $("#ContactHRForm").hide();
+                    $("#ContactHRFormThanks").show();
+                }
+            });
+        }
+        else
+            Recaptcha.reload();
+    }
+    else {
+        $("#HRReCaptchaError").show();
+        Recaptcha.reload();
+    }
+}
+
+function ValidateHRForm() {
+    var formIsValid = true;
+    if (!ValidateEmail("HROfficeEmailField"))
+        formIsValid = false;
+    if (!ValidateEmail("HRSupervisorEmailField"))
+        formIsValid = false;
+    if (!ValidateControl($("#HRNameField")))
+        formIsValid = false;
+    if (!ValidateControl($("#HRSupervisorNameField")))
+        formIsValid = false;
+    if (!ValidateControl($("#HRSubjectField")))
+        formIsValid = false;
+    return formIsValid;
+}
+
+function SubmitCoWorkerContactForm(returnResult) {
+    if (returnResult) {
+        $("#CoWorkerReCaptchaError").hide();
+        if (ValidateCoWorkerForm()) {
+            var coWorkerObject = new Object();
+            coWorkerObject.Name = $("#CoWorkerNameField").val();
+            coWorkerObject.OfficeEmail = $("#CoWorkerOfficeEmailField").val();
+            coWorkerObject.CoWorkerEmails = $("#CoWorkerEmailsField").val();
+            coWorkerObject.EmailSubject = $("#CoWorkerSubjectField").val();
+            coWorkerObject.DescribesMe = $("#CoWorkerDescribesField").prop("selectedIndex");
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify(coWorkerObject),
+                url: __SiteUrl + "TransitService.svc/ContactCoWorker",
+                success: function (data) {
+                    $(".spreadFormsLeft p").hide();
+                    $("#ContactCoWorkerForm").hide();
+                    $("#ContactCoWorkerFormThanks").show();
+                }
+            });
+        }
+        else
+            Recaptcha.reload();
+    }
+    else {
+        $("#CoWorkerReCaptchaError").show();
+        Recaptcha.reload();
+    }
+}
+
+function ValidateCoWorkerForm() {
+    var formIsValid = true;
+    if (!ValidateEmail("CoWorkerOfficeEmailField"))
+        formIsValid = false;
+    if (!ValidateEmail("CoWorkerEmailsField"))
+        formIsValid = false;
+    if (!ValidateControl($("#CoWorkerNameField")))
+        formIsValid = false;
+    if (!ValidateControl($("#CoWorkerSubjectField")))
+        formIsValid = false;
+    return formIsValid;
+}
+
+function SubmitPetitionForm(returnResult) {
+    if (returnResult) {
+        $("#PetitionReCaptchaError").hide();
+        if (ValidatePetitionForm()) {
+            var petitionObject = new Object();
+            petitionObject.Name = $("#PetitionNameField").val();
+            petitionObject.OfficeEmail = $("#PetitionOfficeEmailField").val();
+
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify(petitionObject),
+                url: __SiteUrl + "TransitService.svc/CreatePetition",
+                success: function (data) {
+                    $(".spreadFormsLeft p").hide();
+                    $("#CreatePetitionForm").hide();
+                    $("#CreatePetitionFormThanks").show();
+                    $("#PetitionId").html(__SiteUrlAbs + "commuters-benefit/petition.aspx?id=" + data);
+                    $("#PetitionIdLink").attr("href", __SiteUrlAbs + "commuters-benefit/petition.aspx?id=" + data);
+                }
+            });
+        }
+        else
+            Recaptcha.reload();
+    }
+    else {
+        $("#PetitionReCaptchaError").show();
+        Recaptcha.reload();
+    }
+}
+
+function ValidatePetitionForm() {
+    var formIsValid = true;
+    if (!ValidateEmail("PetitionOfficeEmailField"))
+        formIsValid = false;
+    if (!ValidateControl($("#PetitionNameField")))
+        formIsValid = false;
+    return formIsValid;
+}
+
+function ReloadWPForm() {
+    $("#WhitepaperId").val("");
+    $("#WhitepaperLink").val("");
+
+    $("#WPNameField").val("");
+    $("#WPNameField").removeAttr("style");
+    $("#WPNameFieldError").hide();
+
+    $("#WPEmailField").val("");
+    $("#WPEmailField").removeAttr("style");
+    $("#WPEmailFieldError1").hide();
+    $("#WPEmailFieldError2").hide();
+
+    $("#WPCompanyField").val("");
+    $("#WPCompanyField").removeAttr("style");
+    $("#WPCompanyFieldError").hide();
+
+    $("#WhitepaperFormThanks").hide();
+    $("#WhitepaperForm").show();
+}
+
+function SubmitWPDownload() {
+    if (ValidateWPForm()) {
+        var formData = { name: $("#WPNameField").val(), email: $("#WPEmailField").val(), company: $("#WPCompanyField").val(), existingCustomer: ($("#WPExistingCustomerField").val() == "Yes"),
+            whitepaperId: $("#WhitepaperId").val(), download: $("#WhitepaperLink").val(), title: $("#WhitepaperTitle").val()
+        }; 
+        $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify(formData),
+            url: __SiteUrl + "TransitService.svc/RequestWhitepaper",
+            success: function (data) {
+                //alert("success - " + data);
+                $("#WhitepaperForm").hide();
+                $("#WhitepaperFormThanks").show();
+
+                setTimeout(function () { $(".ui-dialog-titlebar-close").click(); }, 5000);
+                setTimeout(function () { ReloadWPForm(); }, 6000);
+            }
+        });
+    }
+}
+
+function ValidateWPForm() {
+    var formIsValid = true;
+    if (!ValidateEmail("WPEmailField"))
+        formIsValid = false;
+    if (!ValidateControl($("#WPNameField")))
+        formIsValid = false;
+    if (!ValidateControl($("#WPCompanyField")))
+        formIsValid = false;
+    return formIsValid;
+}
+
+function ValidateContactService() {
+    var formIsValid = true;
+    if (!ValidateEmail("CSEmailField"))
+        formIsValid = false;
+    if (!ValidateControl($("#CSFirstNameField")))
+        formIsValid = false;
+    if (!ValidateControl($("#CSLastNameField")))
+        formIsValid = false;
+    if (!ValidateControl($("#CSCompanyField")))
+        formIsValid = false;
+    if (!ValidatePhone("CSPhoneNumberField"))
+        formIsValid = false;
+    return formIsValid;
+}
+
+function ValidateContactSales() {
+    var formIsValid = true;
+    if (!ValidateEmail("SalesEmailField"))
+        formIsValid = false;
+    if (!ValidateControl($("#SalesFirstNameField")))
+        formIsValid = false;
+    if (!ValidateControl($("#SalesLastNameField")))
+        formIsValid = false;
+    if (!ValidateControl($("#SalesCompanyField")))
+        formIsValid = false;
+    if (!ValidatePhone("SalesPhoneNumberField"))
+        formIsValid = false;
+    if (!ValidateControl($("#SalesZipField")))
+        formIsValid = false;
+    return formIsValid;
+}
+
+function ValidateEmail(controlId) {
+    var emailBox = document.getElementById(controlId);
+    if (!ValidateControl($("#" + controlId))) {
+        $("#" + controlId + "Error1").show();
+        $("#" + controlId + "Error2").hide();
+        return false;
+    }
+    else {
+        var emails = new Array();
+        if (emailBox.value.indexOf(",") >= 0)
+            emails = emailBox.value.split(",");
+        else if (emailBox.value.indexOf(";") >= 0)
+            emails = emailBox.value.split(";");
+        else
+            emails[0] = emailBox.value;
+        for (var i = 0; i < emails.length; i++) {
+            if (($.trim(emails[i])).search(/^[a-zA-Z]+([_\.-]?[a-zA-Z0-9]+)*@[a-zA-Z0-9]+([\.-]?[a-zA-Z0-9]+)*(\.[a-zA-Z]{2,4})+$/) == -1) {
+                $("#" + controlId + "Error2").show();
+                $("#" + controlId + "Error1").hide();
+                emailBox.style.backgroundColor = "#FEE0E0";
+                emailBox.style.border = "solid #CC0000 1px";
+                return false;
+            }
+            else {
+                $("#" + controlId + "Error2").hide();
+            }
+        }
+    }
+    return true;
+}
+
+function ValidatePhone(controlId) {
+    var phoneBox = document.getElementById(controlId);
+    if (!ValidateControl($("#" + controlId))) {
+        $("#" + controlId + "Error1").show();
+        $("#" + controlId + "Error2").hide();
+        return false;
+    }
+    else {
+        var phonenum = phoneBox.value;
+
+        if ((($.trim(phonenum)).search(/^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/) == -1)) {
+            $("#" + controlId + "Error2").show();
+            $("#" + controlId + "Error1").hide();
+            phoneBox.style.backgroundColor = "#FEE0E0";
+            phoneBox.style.border = "solid #CC0000 1px";
+            return false;
+        } else {
+            $("#" + controlId + "Error2").hide();
+        }
+    }
+    return true;
+}
+
+function ValidateControl(controlToValidate) {
+    if (controlToValidate.val() == "") {
+        controlToValidate.css("backgroundColor", "#FEE0E0");
+        controlToValidate.css("border", "solid #CC0000 1px");
+        $("#" + controlToValidate.attr('id') + "Error").show();
+        return false;
+    }
+    else {
+        controlToValidate.removeAttr("style");
+        $("#" + controlToValidate.attr('id') + "Error").hide();
+        return true;
+    }
+}
+
+function ValidateListControl(controlToValidate) {
+    if (controlToValidate.get(0).selectedIndex <= 0) {
+        controlToValidate.next().find(".ui-selectmenu").css({ backgroundColor: "#FEE0E0", border: "1px solid #C00" });
+        $("#" + controlToValidate.attr('id') + "Error").show();
+        return false;
+    }
+    else {
+        controlToValidate.next().find(".ui-selectmenu").css({ backgroundColor: "#fff", border: "1px solid #999" });
+        $("#" + controlToValidate.attr('id') + "Error").hide();
+        return true;
+    }
+}
